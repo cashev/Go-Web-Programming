@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 type Post struct {
@@ -28,14 +28,16 @@ func main() {
 		},
 	}
 
-	output, err := xml.MarshalIndent(&post, "", "\t")
+	xmlFile, err := os.Create("post.xml")
 	if err != nil {
-		fmt.Println("Error marshalling to XML:", err)
+		fmt.Println("Error creating XML file:", err)
 		return
 	}
-	err = ioutil.WriteFile("post.xml", []byte(xml.Header+string(output)), 0644)
+	encoder := xml.NewEncoder(xmlFile)
+	encoder.Indent("", "\t")
+	err = encoder.Encode(&post)
 	if err != nil {
-		fmt.Println("Error writing XML to file:", err)
+		fmt.Println("Error encoding XML to file:", err)
 		return
 	}
 }
