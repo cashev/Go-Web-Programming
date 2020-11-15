@@ -7,7 +7,28 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"sync"
 )
+
+type DB struct {
+	mutex *sync.Mutex
+	store map[string][3]float64
+}
+
+func (db *DB) nearest(target [3]float64) string {
+	var filename string
+	db.mutex.Lock()
+	smallest := 1000000.0
+	for k, v := range db.store {
+		dist := distance(target, v)
+		if dist < smallest {
+			filename, smallest = k, dist
+		}
+	}
+	delete(db.store, filename)
+	db.mutex.Unlock()
+	return filename
+}
 
 func averageColor(img image.Image) [3]float64 {
 	bounds := img.Bounds()
@@ -58,19 +79,6 @@ func tilesDB() map[string][3]float64 {
 	return db
 }
 
-func nearest(target [3]float64, db *map[string][3]float64) string {
-	var filename string
-	smallest := 1000000.0
-	for k, v := range *db {
-		dist := distance(target, v)
-		if dist < smallest {
-			filename, smallest = k, dist
-		}
-	}
-	delete(*db, filename)
-	return filename
-}
-
 func distance(p1 [3]float64, p2 [3]float64) float64 {
 	return math.Sqrt(sq(p2[0]-p1[0]) + sq(p2[1]-p1[1]) + sq(p2[2]-p1[2]))
 }
@@ -81,10 +89,14 @@ func sq(n float64) float64 {
 
 var TILESDB map[string][3]float64
 
-func cloneTilesDB() map[string][3]float64 {
+func cloneTilesDB() DB {
 	db := make(map[string][3]float64)
 	for k, v := range TILESDB {
 		db[k] = v
 	}
-	return db
+	tiles := DB{
+		store: db,
+		mutex: &sync.Mutex{},
+	}
+	return tiles
 }
