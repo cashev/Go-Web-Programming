@@ -13,7 +13,7 @@ func printNumbers1() {
 
 func printLetters1() {
 	for i := 'A'; i < 'A'+10; i++ {
-		fmt.Printf("%c", i)
+		fmt.Printf("%c ", i)
 	}
 }
 
